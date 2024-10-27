@@ -35,51 +35,50 @@ def get_schedule():
     schedule = []
     try:
         with open('Testing_schedule.csv', 'r') as csvfile:
-            reader = csv.DictReader(csvfile)
+            reader = csv.reader(csvfile)
+            next(reader)  # Skip header row
             for row in reader:
                 current_date = datetime.now().date()
                 
-                # Morning Load-up command
-                if row['M_LU_time'] and row['M_LU_duration']:
+                # Morning periods (first set of LU and S)
+                if row[0] and row[1]:  # LU_time and LU_duration for morning
                     lu_time = datetime.combine(current_date, 
-                                            datetime.strptime(row['M_LU_time'], '%H:%M').time())
+                                            datetime.strptime(row[0], '%H:%M').time())
                     schedule.append({
                         'command': 'l',
                         'start': lu_time,
-                        'duration': float(row['M_LU_duration']) * 60,
+                        'duration': float(row[1]) * 60,
                         'period': 'Morning Load-up'
                     })
                 
-                # Morning Shed command
-                if row['M_S_time'] and row['M_S_duration']:
+                if row[2] and row[3]:  # S_time and S_duration for morning
                     s_time = datetime.combine(current_date, 
-                                           datetime.strptime(row['M_S_time'], '%H:%M').time())
+                                           datetime.strptime(row[2], '%H:%M').time())
                     schedule.append({
                         'command': 's',
                         'start': s_time,
-                        'duration': float(row['M_S_duration']) * 60,
+                        'duration': float(row[3]) * 60,
                         'period': 'Morning Shed'
                     })
                 
-                # Evening Load-up command
-                if row['E_LU_time'] and row['E_LU_duration']:
+                # Evening periods (second set of LU and S)
+                if row[4] and row[5]:  # LU_time and LU_duration for evening
                     lu_time = datetime.combine(current_date, 
-                                            datetime.strptime(row['E_LU_time'], '%H:%M').time())
+                                            datetime.strptime(row[4], '%H:%M').time())
                     schedule.append({
                         'command': 'l',
                         'start': lu_time,
-                        'duration': float(row['E_LU_duration']) * 60,
+                        'duration': float(row[5]) * 60,
                         'period': 'Evening Load-up'
                     })
                 
-                # Evening Shed command
-                if row['E_S_time'] and row['E_S_duration']:
+                if row[6] and row[7]:  # S_time and S_duration for evening
                     s_time = datetime.combine(current_date, 
-                                           datetime.strptime(row['E_S_time'], '%H:%M').time())
+                                           datetime.strptime(row[6], '%H:%M').time())
                     schedule.append({
                         'command': 's',
                         'start': s_time,
-                        'duration': float(row['E_S_duration']) * 60,
+                        'duration': float(row[7]) * 60,
                         'period': 'Evening Shed'
                     })
         
@@ -97,6 +96,7 @@ def get_schedule():
                   f"for {event['duration']/60:.1f} hours")
         
         return schedule
+        
     except FileNotFoundError:
         print("Error: 'Testing_schedule.csv' not found in the current directory.")
         return []
