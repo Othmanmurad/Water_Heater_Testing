@@ -39,38 +39,62 @@ def get_schedule():
             for row in reader:
                 current_date = datetime.now().date()
                 
-                # Load-up command
-                if row['LU_time'] and row['LU_duration']:
-                    lu_time = datetime.combine(current_date, datetime.strptime(row['LU_time'], '%H:%M').time())
+                # Morning Load-up command
+                if row['M_LU_time'] and row['M_LU_duration']:
+                    lu_time = datetime.combine(current_date, 
+                                            datetime.strptime(row['M_LU_time'], '%H:%M').time())
                     schedule.append({
                         'command': 'l',
                         'start': lu_time,
-                        'duration': float(row['LU_duration']) * 60  # Convert hours to minutes
+                        'duration': float(row['M_LU_duration']) * 60,
+                        'period': 'Morning Load-up'
                     })
                 
-                # Shed command
-                if row['S_time'] and row['S_duration']:
-                    s_time = datetime.combine(current_date, datetime.strptime(row['S_time'], '%H:%M').time())
+                # Morning Shed command
+                if row['M_S_time'] and row['M_S_duration']:
+                    s_time = datetime.combine(current_date, 
+                                           datetime.strptime(row['M_S_time'], '%H:%M').time())
                     schedule.append({
                         'command': 's',
                         'start': s_time,
-                        'duration': float(row['S_duration']) * 60  # Convert hours to minutes
+                        'duration': float(row['M_S_duration']) * 60,
+                        'period': 'Morning Shed'
                     })
                 
-                # Recovery Load-up command
-                if row['RLU_time'] and row['RLU_duration']:
-                    rlu_time = datetime.combine(current_date, datetime.strptime(row['RLU_time'], '%H:%M').time())
+                # Evening Load-up command
+                if row['E_LU_time'] and row['E_LU_duration']:
+                    lu_time = datetime.combine(current_date, 
+                                            datetime.strptime(row['E_LU_time'], '%H:%M').time())
                     schedule.append({
-                        'command': 'l',  # Assuming recovery load-up uses the same command as initial load-up
-                        'start': rlu_time,
-                        'duration': float(row['RLU_duration']) * 60  # Convert hours to minutes
+                        'command': 'l',
+                        'start': lu_time,
+                        'duration': float(row['E_LU_duration']) * 60,
+                        'period': 'Evening Load-up'
+                    })
+                
+                # Evening Shed command
+                if row['E_S_time'] and row['E_S_duration']:
+                    s_time = datetime.combine(current_date, 
+                                           datetime.strptime(row['E_S_time'], '%H:%M').time())
+                    schedule.append({
+                        'command': 's',
+                        'start': s_time,
+                        'duration': float(row['E_S_duration']) * 60,
+                        'period': 'Evening Shed'
                     })
         
         schedule.sort(key=lambda x: x['start'])
         
+        # Handle day rollover
         for i in range(1, len(schedule)):
             if schedule[i]['start'] < schedule[i-1]['start']:
                 schedule[i]['start'] += timedelta(days=1)
+        
+        # Print schedule for verification
+        print("\nLoaded Schedule:")
+        for event in schedule:
+            print(f"{event['period']}: {event['start'].strftime('%H:%M')} "
+                  f"for {event['duration']/60:.1f} hours")
         
         return schedule
     except FileNotFoundError:
@@ -107,24 +131,32 @@ def main():
     end_time = max(datetime.now() + timedelta(hours=test_duration), last_event_time)
 
     last_line = 0
+    last_command = None
 
     print("Beginning test execution...")
     while datetime.now() < end_time:
         current_time = datetime.now()
         
+        # Find active command
         active_command = None
         for item in schedule:
-            if item['start'] <= current_time < item['start'] + timedelta(minutes=item['duration']):
-                active_command = item['command']
-                send_command(f"{active_command}\n")
-                print(f"Sent command: {active_command}")
+            end_time_event = item['start'] + timedelta(minutes=item['duration'])
+            if item['start'] <= current_time < end_time_event:
+                active_command = item
+                if last_command != item['command']:
+                    send_command(f"{item['command']}\n")
+                    print(f"Sent command: {item['command']} ({item['period']})")
+                    last_command = item['command']
                 break
         
         if not active_command:
-            send_command("e\n")  # Baseline if no other command is active
-            print("Sent command: Baseline")
+            if last_command != 'e':
+                send_command("e\n")  # Baseline if no other command is active
+                print("Sent command: Baseline")
+                last_command = 'e'
 
         send_command("o\n")
+        print(f"Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print("Sent outside communication command")
 
         last_line = update_csv('log.csv', 'output.csv', last_line)
@@ -137,6 +169,3 @@ def main():
 
     end_service()
     print("Test completed.")
-
-if __name__ == "__main__":
-    main()
