@@ -1,3 +1,10 @@
+# This script analyzes the dataset
+# The user should enter the "Load-up" and "Shed"
+# starting time and duration
+# The output of the scrip is a data graph with
+# shedding the "Load-up" and "Shed" periods
+
+
 import pandas as pd
 import numpy as np
 from scipy.signal import find_peaks
