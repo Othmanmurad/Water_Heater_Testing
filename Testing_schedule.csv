@@ -1,2 +1,2 @@
-LU_time,LU_duration,S_time,S_duration,RLU_time,RLU_duration
-11:00,5.0,16:00,5.0,22:00,2.0
+LU_time,LU_duration,S_time,S_duration,LU_time,LU_duration,S_time,S_duration
+08:10,2.0,10:10,3.0,17:10,4.0,21:00,5.0
