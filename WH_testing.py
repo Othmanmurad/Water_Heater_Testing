@@ -1,3 +1,6 @@
+# Testing script works for "Load-up", "Shed", and "Recovery Load-up"
+# Work with Testing_schedule_LSL.py
+
 import subprocess
 import time
 import os
