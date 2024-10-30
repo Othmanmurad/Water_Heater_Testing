@@ -1,4 +1,5 @@
 # Testing script works for two "Load-up" and "Shed" periods
+# Work with Testing_schedule_LSLS.py
 
 import subprocess
 import time
